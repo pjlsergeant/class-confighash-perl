@@ -26,7 +26,7 @@ Boxing for hashes containing config value
 
  $config->database->options->city; # St Petersburg
 
- # Dies: Can't find 'flags' at [/->database]. Options: [user; pass; options]
+ # Dies: Can't find 'flags' at [/->database]. Options: [options; pass; user]
  $config->database->flags;
 
  # Won't die, returns undef
@@ -109,7 +109,7 @@ sub AUTOLOAD {
         croak( sprintf("Can't find '%s' at [%s]. Options: [%s]",
             $name,
             ( join '->', @{ $self->{'path'} } ),
-            ( join '; ', keys sort %{ $self->{'_raw'} } )
+            ( join '; ', sort keys %{ $self->{'_raw'} } )
         ));
     }
 
