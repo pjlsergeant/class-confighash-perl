@@ -138,7 +138,7 @@ Module inspired by a patch I saw once against Mojolicious's config.
 =head1 AUTHOR
 
 Peter Sergeant C<pete@clueball.com> - written while working for the excellent
-L<http://www.net-a-porter.com/|NET-A-PORTER>.
+L<Net-A-Porter|http://www.net-a-porter.com/>.
 
 =cut
 
