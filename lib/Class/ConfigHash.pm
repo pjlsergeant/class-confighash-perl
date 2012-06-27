@@ -65,7 +65,7 @@ sub _new {
     }, $class;
 }
 
-=head2 *
+=head2 Auto-created methods generated for each hash key
 
 Every other method call tries to lookup the method name as a hashkey.
 
