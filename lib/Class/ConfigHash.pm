@@ -6,11 +6,11 @@ use Carp qw/croak/;
 
 =head1 NAME
 
-Class::ConfigHash - Boxing for hashes containing config value
+Class::ConfigHash - Lazily turn multi-level hashes of configuration data in to objects with error catching and defaults
 
 =head1 DESCRIPTION
 
-Boxing for hashes containing config value
+Lazily turn multi-level hashes of configuration data in to objects with error catching and defaults
 
 =head1 SYNOPSIS
 
@@ -61,7 +61,7 @@ sub _new {
 
     bless {
         '_raw' => $hash,
-        'path' => $path ? [@$path] : ['/'],
+        'path' => [@$path], # Shallow copy
     }, $class;
 }
 
@@ -92,20 +92,35 @@ eg:
 
 sub AUTOLOAD {
     my $self = shift;
-    my $options = shift;
-
-    my $type = ref($self) or croak "$self isn't a config object - it's a class. Did you accidentally use new() instead of _new()?";
+    my $options = shift || {};
 
     our $AUTOLOAD;
     my $name = $AUTOLOAD;
     $name =~ s/.*://;   # strip fully-qualified portion
 
-    unless ( exists $self->{'_raw'}->{$name} ) {
-        if ( $options && ref $options eq 'HASH' ) {
-            return $options->{'default'} if exists $options->{'default'};
-            return undef if $options->{'allow_undef'};
-        }
+    # If they're calling methods on the classname, rather than an object
+    unless ( ref($self) ) {
 
+        # Most common case is they use new() instead of _new(), so catch that
+        if ( $name eq 'new' ) {
+            croak "The Class::ConfigHash instantiator is called _new(), not new()";
+
+        # Otherwise just chastise them for their clumsiness
+        } else {
+            croak "You called [$name] on Config::ConfigHash, rather than an instance of it";
+        }
+    }
+
+    # In the case where we can't find what they're pointing at
+    unless ( exists $self->{'_raw'}->{$name} ) {
+
+        # Return the default if one was specified
+        return $options->{'default'} if exists $options->{'default'};
+
+        # Return undef if they've said that's ok
+        return undef if $options->{'allow_undef'};
+
+        # Otherwise die, telling the user what they could have used instead
         croak( sprintf("Can't find '%s' at [%s]. Options: [%s]",
             $name,
             ( join '->', @{ $self->{'path'} } ),
@@ -113,14 +128,20 @@ sub AUTOLOAD {
         ));
     }
 
+    # Grab the item they were after
     my $item = $self->{'_raw'}->{$name};
-    if ( $options && $options->{'raw'} ) {
-        return $item;
-    } elsif ( ref( $item ) eq 'HASH' ) {
-        return $self->_new( $item, [@{$self->{'path'}}, $name ] );
-    } else {
-        return $item;
-    }
+
+    # Regardless of its type, if they want the raw version, give it to them
+    return $item if $options->{'raw'};
+
+    # If they've asked for a value that's a hashref, we create that in to this
+    # class and release.
+    return $self->_new( $item, [@{$self->{'path'}}, $name ] )
+        if ref $item && ref $item eq 'HASH';
+
+    # Otherwise, return whatever we have
+    return $item;
+
 }
 
 # Don't want this hitting AUTOLOAD, obv
