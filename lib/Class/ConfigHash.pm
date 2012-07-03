@@ -133,7 +133,7 @@ configuration hashes, so there's no easy way to set values, there are defaults,
 and the error message gives you an overview of the different options you might
 want, and we autobox hashref children.
 
-Module inspired by a patch I saw once against Mojolicious's config.
+Module inspired by L<this patch to Dancer|http://blogs.perl.org/users/ovid/2012/03/hacking-on-dancer.html>
 
 =head1 AUTHOR
 
